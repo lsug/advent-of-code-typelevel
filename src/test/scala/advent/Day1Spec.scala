@@ -44,7 +44,7 @@ final class Day1Spec extends FlatSpec with Matchers {
   }
 
   it should "have a mass of 966 for a module of mass 1969" in {
-    Day1.totalFuel(1969) should be(654)
+    Day1.totalFuel(1969) should be(966)
   }
 
   it should "have a mass of 50346 for a module of mass 100756" in {

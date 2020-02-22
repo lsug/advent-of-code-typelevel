@@ -1,5 +1,7 @@
 # Advent of Code with the Typelevel Stack
 
+![Scala CI](https://github.com/lsug/advent-of-code-typelevel/workflows/Scala%20CI/badge.svg)
+
 # Aim
 
 The [Advent Of Code](https://adventofcode.com/2019/about) is a series of programming challenges
