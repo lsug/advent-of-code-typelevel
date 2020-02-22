@@ -18,8 +18,6 @@ object Day1 {
 
   /** Calculates the sum of the fuel required to launch each module of a given mass
     *
-    * HINT: This should make use of
-    *
     * @param masses The masses of each module
     * @return The sum of the fuel required to launch each module
     */
