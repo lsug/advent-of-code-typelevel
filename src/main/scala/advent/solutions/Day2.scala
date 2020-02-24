@@ -1,5 +1,6 @@
 package advent.solutions
 
+
 import scala.annotation.tailrec
 
 /** Day 2: 1202 Program Alarm
@@ -58,13 +59,19 @@ object Day2 {
      * @return The input that would be entered in the program to produce the given output
      */
     def inputForOutput(program: List[Int], output: Int): Input = {
+//      val out = for {
+//        x <- 0 to 99
+//        y <- 0 to 99
+//        input = Input(x, y)
+//        modifiedProgram = generateUpdatedProgram(input, program)
+//        out = run(modifiedProgram)
+//      } yield input if check(out)
+
       val input1 = Input(0, 0)
       val modifiedProgram: List[Int] = generateUpdatedProgram(input1, program)
       if (check(run(modifiedProgram))) input1 else input1
 
     }
-
-    def inputGenerator() = ???
 
 
     def generateUpdatedProgram(input: Input, program: List[Int]): List[Int] = {
@@ -72,7 +79,7 @@ object Day2 {
       z1.updated(2, input.verb)
     }
 
-    def check(decodedProgram: List[Int]): Boolean = if (decodedProgram(0) == 19690720) true else false
+    def check(decodedProgram: Seq[Int]): Boolean = if (decodedProgram(0) == 19690720) true else false
 
   }
 
@@ -81,9 +88,6 @@ object Day2 {
     // Copy the puzzle input from https://adventofcode.com/2019/day/2/input
     val puzzleInput: List[Int] = List(1,99,99,4,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,1,9,27,31,1,31,10,35,2,13,35,39,1,39,10,43,1,43,9,47,1,47,13,51,1,51,13,55,2,55,6,59,1,59,5,63,2,10,63,67,1,67,9,71,1,71,13,75,1,6,75,79,1,10,79,83,2,9,83,87,1,87,5,91,2,91,9,95,1,6,95,99,1,99,5,103,2,103,10,107,1,107,6,111,2,9,111,115,2,9,115,119,2,13,119,123,1,123,9,127,1,5,127,131,1,131,2,135,1,135,6,0,99,2,0,14,0)
 
-
-    //(12, 1) => 4138657
-    //(12, 2) => 4138658
     // Solve your puzzle using the functions in parts 1 and 2
     val part1 = Day2.Part1.run(puzzleInput)(0)
     println(part1)
