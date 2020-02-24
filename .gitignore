@@ -1,5 +1,6 @@
 *.class
 *.log
 .metals
+.bloop
 target
 project/target
