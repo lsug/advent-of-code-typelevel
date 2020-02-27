@@ -73,37 +73,22 @@ object Day2 {
       */
     def inputForOutput(program: List[Int], output: Int): Input = {
 
-//      val result: Seq[Input] = for {
-//        x <- (0 to 99).toList
-//        y <- (0 to 99).toList
-//        input = Input(x, y)
-//        modifiedProgram = generateUpdatedProgram(input, program)
-//        out = run(modifiedProgram)(0)
-//        if out == output
-//      } yield input
+      val nouns = LazyList.range(0, 100, 1)
+      val verbs = LazyList.range(0, 100, 1)
+      val inputs: LazyList[Input] =
+        nouns.flatMap(n => verbs.map(v => Input(n, v)))
 
-      val finalResult = {
-        //        val nouns = LazyList.range(0, 100, 1)
-        //        val verbs = LazyList.range(0, 100, 1)
-        //        val inputs: LazyList[Input] = nouns.flatMap(n => verbs.map(v => Input(n, v)))
-        val nouns = List.range(0, 100)
-        val verbs = List.range(0, 100)
-        val inputs: List[Input] = nouns.flatMap(n => verbs.map(v => Input(n, v)))
-
-        @tailrec
-        def go(accum: List[Input]): Input = {
-          inputs match {
-            case x :: xs => {
-              val modifiedProgram = generateUpdatedProgram(x, program)
-              val result = run(modifiedProgram)(0)
-              if (result == output) x else go(xs)
-            }
-            case Nil => Input(-1, -1)
-          }
-        }
-        go(inputs)
+      def check(input: Input): Boolean = {
+        val modifiedProgram = generateUpdatedProgram(input, program)
+        val result = run(modifiedProgram)(0)
+        if (result == output) true else false
       }
-      finalResult
+
+      val out = inputs.find(check(_) == true) match {
+        case Some(x) => x
+        case None    => throw new Exception("No solution exists.")
+      }
+      out
     }
 
     def generateUpdatedProgram(input: Input, program: List[Int]): List[Int] = {
@@ -115,7 +100,7 @@ object Day2 {
   def main(args: Array[String]): Unit = {
 
     // Copy the puzzle input from https://adventofcode.com/2019/day/2/input
-    val puzzleInput: List[Int] = List(1, 0, 0, 4, 1, 1, 2, 3, 1, 3, 4, 3, 1, 5,
+    val puzzleInput: List[Int] = List(1, 12, 2, 3, 1, 1, 2, 3, 1, 3, 4, 3, 1, 5,
       0, 3, 2, 10, 1, 19, 1, 19, 9, 23, 1, 23, 6, 27, 1, 9, 27, 31, 1, 31, 10,
       35, 2, 13, 35, 39, 1, 39, 10, 43, 1, 43, 9, 47, 1, 47, 13, 51, 1, 51, 13,
       55, 2, 55, 6, 59, 1, 59, 5, 63, 2, 10, 63, 67, 1, 67, 9, 71, 1, 71, 13,
@@ -125,10 +110,9 @@ object Day2 {
       131, 2, 135, 1, 135, 6, 0, 99, 2, 0, 14, 0)
 
     // Solve your puzzle using the functions in parts 1 and 2
-//    val part1 = Day2.Part1.run(puzzleInput)(0)
-//    println(part1)
+    val part1 = Day2.Part1.run(puzzleInput)(0)
+    println(part1)
     val part2 = Day2.Part2.inputForOutput(puzzleInput, 19690720)
-    println(part2)
-    // 19690720
+    println(100 * part2.noun + part2.verb)
   }
 }
