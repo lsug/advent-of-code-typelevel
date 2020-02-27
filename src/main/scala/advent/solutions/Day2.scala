@@ -71,7 +71,7 @@ object Day2 {
       * @param output  The given output of the program
       * @return The input that would be entered in the program to produce the given output
       */
-    def inputForOutput(program: List[Int], output: Int): Input = {
+    def inputForOutput(program: List[Int], output: Int): Option[Input] = {
 
       val nouns = LazyList.range(0, 100, 1)
       val verbs = LazyList.range(0, 100, 1)
@@ -81,13 +81,10 @@ object Day2 {
       def check(input: Input): Boolean = {
         val modifiedProgram = generateUpdatedProgram(input, program)
         val result = run(modifiedProgram)(0)
-        if (result == output) true else false
+        result == output
       }
 
-      val out = inputs.find(check(_) == true) match {
-        case Some(x) => x
-        case None    => throw new Exception("No solution exists.")
-      }
+      val out = inputs.find(check(_) == true)
       out
     }
 
@@ -113,6 +110,6 @@ object Day2 {
     val part1 = Day2.Part1.run(puzzleInput)(0)
     println(part1)
     val part2 = Day2.Part2.inputForOutput(puzzleInput, 19690720)
-    println(100 * part2.noun + part2.verb)
+    println(100 * part2.get.noun + part2.get.verb)
   }
 }
