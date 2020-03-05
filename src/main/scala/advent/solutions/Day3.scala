@@ -52,48 +52,55 @@ object Day3 {
     *
     * @param text A comma separated string of displacements e.g "R75,D30,R83"
     */
-  def parse(text: String): Either[WireParseError, Wire] = {
+  def parse(text: String): Either[List[WireParseError], Wire] = {
     val texts: List[(String, String)] =
       text
         .split(",")
         .map(t => (t.filter(_.isLetter), t.filter(!_.isLetter)))
         .toList
 
-    checkTexts(texts) match {
-      case "allValid" =>
-        Right(
-          Wire(texts.map(t => Displacement(whichDirection(t._1), t._2.toInt)))
-        )
-      case "invalidDirection" => Left(InvalidDirection(text))
-      case "invalidDistance"  => Left(InvalidDistance(text))
-    }
+    val (lefts, rights) = checkTexts(texts).partitionMap(identity)
+
+    if (lefts.isEmpty) Right(Wire(rights)) else Left(lefts)
   }
 
-  private def checkTexts(texts: List[(String, String)]): String = {
-    if (texts.forall(t => isValidDirection(t._1))) {
-      if (texts.forall(t => t._2.toInt > 0)) "allValid"
-      else "invalidDistance"
-    } else "invalidDirection"
+  private def checkTexts(
+      texts: List[(String, String)]
+  ): List[Either[WireParseError, Displacement]] = {
+    val out = texts.map(t =>
+      validateDirection(t._1) match {
+        case Right(direction) =>
+          validateDistance(t._2) match {
+            case Right(distance) =>
+              Right(Displacement(direction, distance.toInt))
+            case Left(value) => Left(value)
+          }
+        case Left(value) => Left(value)
+      }
+    )
+    out
   }
 
-  private def isValidDirection(s: String): Boolean =
-    s == "L" | s == "R" | s == "U" | s == "D"
+  private def validateDirection(
+      s: String
+  ): Either[InvalidDirection, Direction] = {
+    if (s == "L" | s == "R" | s == "U" | s == "D") {
+      s match {
+        case "L" => Right(Direction.Left)
+        case "R" => Right(Direction.Right)
+        case "U" => Right(Direction.Up)
+        case "D" => Right(Direction.Down)
+      }
+    } else Left(InvalidDirection(s))
+  }
 
-  private def whichDirection(s: String): Direction = {
-    import Direction._
-    s match {
-      case "L" => Left
-      case "R" => Right
-      case "U" => Up
-      case "D" => Down
-    }
+  private def validateDistance(s: String): Either[InvalidDistance, String] = {
+    if (s.toInt > 0) Right(s) else Left(InvalidDistance(s))
   }
 
   final case class Coordinate(x: Int, y: Int)
 
   final case class StartingAndEndingPoints(start: Coordinate, end: Coordinate)
-
-  final case class TurningPoint(point: Coordinate)
 
   final case class Path(points: Seq[Coordinate])
 
@@ -111,23 +118,32 @@ object Day3 {
     * @param wire
     * @return
     */
-  def findTurningPoints(wire: Wire): List[TurningPoint] = {
+  def allCoordinates(wire: Wire): List[Coordinate] = {
+    val turningPoints: List[Coordinate] = findTurningPoints(wire)
 
-    @tailrec
-    def go(
-        accum: List[Coordinate],
-        currentCoordinate: Coordinate,
-        displacements: List[Displacement]
-    ): List[TurningPoint] = displacements match {
-      case x :: xs =>
-        go(
-          nextTurningPoint(x, currentCoordinate) +: accum,
-          nextTurningPoint(x, currentCoordinate),
-          xs
-        )
-      case Nil => accum.reverse.map(TurningPoint)
-    }
-    go(List(Coordinate(0, 0)), Coordinate(0, 0), wire.path)
+    val startingAndEndingPoints = wire.path
+      .zip(turningPoints.init)
+      .zip(turningPoints.tail)
+      .map(d => (d._1._1, StartingAndEndingPoints(d._1._2, d._2)))
+    startingAndEndingPoints.flatMap(d => pathTravelled(d._1, d._2))
+  }
+
+  /**
+    *
+    * @param wire
+    * @return
+    */
+  def findTurningPoints(wire: Wire): List[Coordinate] = {
+    wire.path
+      .foldLeft(List[Coordinate](Coordinate(0, 0)), Coordinate(0, 0))(
+        (accum, c) =>
+          (
+            nextTurningPoint(c, accum._2) +: accum._1,
+            nextTurningPoint(c, accum._2)
+          )
+      )
+      ._1
+      .reverse
   }
 
   /**
@@ -167,39 +183,6 @@ object Day3 {
 
   /**
     *
-    * @param wire
-    * @return
-    */
-  def pairEachDisplacementWithStartingAndEndingCoordinates(
-      wire: Wire
-  ): List[WireMap] = {
-    val turningPoints: List[TurningPoint] = findTurningPoints(wire)
-    val len = turningPoints.length - 2
-
-    @tailrec
-    def go(
-        accum: List[WireMap],
-        num: Int
-    ): List[WireMap] = {
-      if (num > len) accum.reverse
-      else
-        go(
-          WireMap(
-            wire.path(num),
-            StartingAndEndingPoints(
-              turningPoints(num).point,
-              turningPoints(num + 1).point
-            )
-          ) +: accum,
-          num + 1
-        )
-    }
-
-    go(List[WireMap](), 0)
-  }
-
-  /**
-    *
     * @param displacement
     * @param path
     * @return
@@ -207,18 +190,18 @@ object Day3 {
   def pathTravelled(
       displacement: Displacement,
       path: StartingAndEndingPoints
-  ): Path = {
+  ): List[Coordinate] = {
     val out = displacement.direction match {
       case Right =>
-        (path.start.x to path.end.x).map(d => Coordinate(d, path.start.y))
+        (path.start.x + 1 to path.end.x).map(d => Coordinate(d, path.start.y))
       case Left =>
-        (path.end.x to path.start.x).map(d => Coordinate(d, path.start.y))
+        (path.end.x until path.start.x).map(d => Coordinate(d, path.start.y))
       case Up =>
-        (path.start.y to path.end.y).map(d => Coordinate(path.start.x, d))
+        (path.start.y + 1 to path.end.y).map(d => Coordinate(path.start.x, d))
       case Down =>
-        (path.end.y to path.start.y).map(d => Coordinate(path.start.x, d))
+        (path.end.y until path.start.y).map(d => Coordinate(path.start.x, d))
     }
-    Path(out)
+    out.toList
   }
 
   object Part1 {
@@ -233,23 +216,11 @@ object Day3 {
       *         or [[None]] if they don't intersect at all
       */
     def distanceToIntersection(wire0: Wire, wire1: Wire): Option[Int] = {
-      val wire0Coordinates: List[Coordinate] =
-        pairEachDisplacementWithStartingAndEndingCoordinates(
-          wire0
-        ).flatMap(i =>
-          pathTravelled(i.displacement, i.startingAndEndingPoints).points
-        )
-
-      val wire1Coordinates =
-        pairEachDisplacementWithStartingAndEndingCoordinates(
-          wire1
-        ).flatMap(i =>
-          pathTravelled(i.displacement, i.startingAndEndingPoints).points
-        )
+      val wire0Coordinates = allCoordinates(wire0)
+      val wire1Coordinates = allCoordinates(wire1)
 
       val intersectionPoints = wire0Coordinates
         .intersect(wire1Coordinates)
-        .filterNot(_ == Coordinate(0, 0))
 
       if (intersectionPoints.isEmpty) None
       else Some(intersectionPoints.map(c => math.abs(c.x) + math.abs(c.y)).min)
@@ -269,6 +240,7 @@ object Day3 {
       *         or [[None]] if they don't intersect at all
       */
     def numberOfStepsToIntersection(wire0: Wire, wire1: Wire): Option[Int] = {
+
       val out = intersectionPoints(wire0, wire1) match {
         case Some(x) => {
           val result = x.map(intersectionPoint => {
@@ -294,40 +266,37 @@ object Day3 {
         wire: Wire,
         intersectionPoint: Coordinate
     ): Int = {
-      val initialLocationDetails: List[WireMap] =
-        pairEachDisplacementWithStartingAndEndingCoordinates(wire)
+      val turningPoints: List[Coordinate] = findTurningPoints(wire)
 
-      val wirePathTraveled: List[PathLocations] =
-        initialLocationDetails.map(i =>
-          PathLocations(
-            i.displacement,
-            Path(
-              pathTravelled(i.displacement, i.startingAndEndingPoints).points
-            )
-          )
-        )
+      val startingAndEndingPoints
+          : List[(Displacement, StartingAndEndingPoints)] = wire.path
+        .zip(turningPoints.init)
+        .zip(turningPoints.tail)
+        .map(d => (d._1._1, StartingAndEndingPoints(d._1._2, d._2)))
 
-      val selectedDisplacement = wirePathTraveled
-        .filter(m => m.path.points.contains(intersectionPoint))
+      val allCoordinates: List[(Displacement, List[Coordinate])] =
+        startingAndEndingPoints.map(i => (i._1, pathTravelled(i._1, i._2)))
+
+      val selectedDisplacement = allCoordinates
+        .filter(m => m._2.contains(intersectionPoint))
         .head
-        .displacement
+        ._1
 
-      val allDisplacements = initialLocationDetails.map(_.displacement)
-      val index = allDisplacements.indexWhere(_ == selectedDisplacement)
-      val previousSteps: Int =
-        wirePathTraveled
+      val index =
+        startingAndEndingPoints.indexWhere(z => z._1 == selectedDisplacement)
+      val allPreviousSteps: Int =
+        startingAndEndingPoints
           .take(index)
-          .map(m => m.displacement.distance)
+          .map(m => m._1.distance)
           .sum
-      val currentStep: WireMap = initialLocationDetails(index)
       val diffX = math.abs(
-        currentStep.startingAndEndingPoints.start.x - intersectionPoint.x
+        startingAndEndingPoints(index)._2.start.x - intersectionPoint.x
       )
       val diffY = math.abs(
-        currentStep.startingAndEndingPoints.start.y - intersectionPoint.y
+        startingAndEndingPoints(index)._2.start.y - intersectionPoint.y
       )
-      val step = diffX + diffY
-      previousSteps + step
+      val remainingSteps = diffX + diffY
+      allPreviousSteps + remainingSteps
     }
 
     /**
@@ -341,16 +310,11 @@ object Day3 {
         wire1: Wire
     ): Option[List[Coordinate]] = {
 
-      val wireCoordinates = List(wire0, wire1).map(w =>
-        pairEachDisplacementWithStartingAndEndingCoordinates(w)
-          .flatMap(i =>
-            pathTravelled(i.displacement, i.startingAndEndingPoints).points
-          )
-      )
+      val wire0Coordinates = allCoordinates(wire0)
+      val wire1Coordinates = allCoordinates(wire1)
 
-      val intersectionPoints = wireCoordinates.head
-        .intersect(wireCoordinates.last)
-        .filterNot(_ == Coordinate(0, 0))
+      val intersectionPoints = wire0Coordinates
+        .intersect(wire1Coordinates)
 
       if (intersectionPoints.isEmpty) None
       else Some(intersectionPoints)
@@ -370,6 +334,14 @@ object Day3 {
       "L1001,D833,L855,D123,R36,U295,L319,D700,L164,U576,L68,D757,R192,D738,L640,D660,R940,D778,R888,U772,R771,U900,L188,D464,L572,U184,R889,D991,L961,U751,R560,D490,L887,D748,R37,U910,L424,D401,L385,U415,L929,U193,R710,D855,L596,D323,L966,D505,L422,D139,L108,D135,R737,U176,R538,D173,R21,D951,R949,D61,L343,U704,R127,U468,L240,D834,L858,D127,R328,D863,R329,U477,R131,U864,R997,D38,R418,U611,R28,U705,R148,D414,R786,U264,L785,D650,R201,D250,R528,D910,R670,U309,L658,U190,R704,U21,R288,D7,R930,U62,R782,U621,R328,D725,R305,U700,R494,D137,R969,U142,L867,U577,R300,U162,L13,D698,R333,U865,R941,U796,L60,U902,L784,U832,R78,D578,R196,D390,R728,D922,R858,D994,L457,U547,R238,D345,R329,D498,R873,D212,R501,U474,L657,U910,L335,U133,R213,U417,R698,U829,L2,U704,L273,D83,R231,D247,R675,D23,L692,D472,L325,D659,L408,U746,L715,U395,L596,U296,R52,D849,L713,U815,R684,D551,L319,U768,R176,D182,R557,U731,R314,D543,L9,D256,R38,D809,L567,D332,R375,D572,R81,D479,L71,U968,L831,D247,R989,U390,R463,D576,R740,D539,R488,U367,L596,U375,L763,D824,R70,U448,R979,D977,L744,D379,R488,D671,L516,D334,L542,U517,L488,D390,L713,D932,L28,U924,L448,D229,L488,D501,R19,D910,L979,D411,R711,D824,L973,U291,R794,D485,R208,U370,R655,U450,L40,D804,L374,D671,R962,D829,L209,U111,L84,D876,L832,D747,L733,D560,L702,D972,R188,U817,L111,U26,L492,U485,L71,D59,L269,D870,L152,U539,R65,D918,L932,D260,L485,U77,L699,U254,R924,U643,L264,U96,R395,D917,R360,U354,R101,D682,R854,U450,L376,D378,R872,D311,L881,U630,R77,D766,R672"
 
     // Solve your puzzle using the functions in parts 1 and 2
+//    parse(puzzleWire0Input) match {
+//      case Left(_) => println("Invalid inputs")
+//      case Right(input1) =>
+//        parse(puzzleWire1Input) match {
+//          case Left(_)       => println("Invalid inputs")
+//          case Right(input2) => println(distanceToIntersection(input1, input2))
+//        }
+//    }
     println(
       distanceToIntersection(
         parse(puzzleWire0Input).getOrElse(Wire(List())),
@@ -383,6 +355,5 @@ object Day3 {
         parse(puzzleWire1Input).getOrElse(Wire(List()))
       )
     )
-
   }
 }

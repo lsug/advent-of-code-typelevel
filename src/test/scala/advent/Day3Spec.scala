@@ -64,4 +64,19 @@ final class Day3Spec
       intersectionPoints(_wire0, _wire1)
     }
   }
+
+  "findTurningPoints" should "return a list of turning points" in {
+    assertResult(
+      List(
+        Coordinate(0, 0),
+        Coordinate(8, 0),
+        Coordinate(8, 5),
+        Coordinate(3, 5),
+        Coordinate(3, 2)
+      )
+    ) {
+      findTurningPoints(_wire0)
+    }
+  }
+
 }
