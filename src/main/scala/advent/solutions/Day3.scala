@@ -102,15 +102,6 @@ object Day3 {
 
   final case class StartingAndEndingPoints(start: Coordinate, end: Coordinate)
 
-  final case class Path(points: Seq[Coordinate])
-
-  final case class WireMap(
-      displacement: Displacement,
-      startingAndEndingPoints: StartingAndEndingPoints
-  )
-
-  final case class PathLocations(displacement: Displacement, path: Path)
-
   import Direction._
 
   /**
@@ -119,31 +110,34 @@ object Day3 {
     * @return
     */
   def allCoordinates(wire: Wire): List[Coordinate] = {
-    val turningPoints: List[Coordinate] = findTurningPoints(wire)
-
-    val startingAndEndingPoints = wire.path
-      .zip(turningPoints.init)
-      .zip(turningPoints.tail)
-      .map(d => (d._1._1, StartingAndEndingPoints(d._1._2, d._2)))
-    startingAndEndingPoints.flatMap(d => pathTravelled(d._1, d._2))
+    val origin = Coordinate(0, 0)
+    wire.path
+      .foldLeft(List[Coordinate]() -> origin) {
+        case ((acc, currentCoordinate), displacement) =>
+          val path: List[Coordinate] =
+            coordinatesAlong(displacement, currentCoordinate)
+          (acc ::: path, path.last)
+      }
+      ._1
   }
 
   /**
+    * Given a starting displacement & coordinate, work out all the points of the wire from starting to ending.
     *
-    * @param wire
+    * @param displacement
+    * @param currentCoordinate
     * @return
     */
-  def findTurningPoints(wire: Wire): List[Coordinate] = {
-    wire.path
-      .foldLeft(List[Coordinate](Coordinate(0, 0)), Coordinate(0, 0))(
-        (accum, c) =>
-          (
-            nextTurningPoint(c, accum._2) +: accum._1,
-            nextTurningPoint(c, accum._2)
-          )
-      )
-      ._1
-      .reverse
+  def coordinatesAlong(
+      displacement: Displacement,
+      currentCoordinate: Coordinate
+  ): List[Coordinate] = {
+    val endingPoint = add(displacement, currentCoordinate)
+    val path = pathTravelled(
+      displacement,
+      StartingAndEndingPoints(currentCoordinate, endingPoint)
+    )
+    path
   }
 
   /**
@@ -152,7 +146,7 @@ object Day3 {
     * @param currentCoordinate
     * @return
     */
-  def nextTurningPoint(
+  def add(
       displacement: Displacement,
       currentCoordinate: Coordinate
   ): Coordinate = {
@@ -195,11 +189,15 @@ object Day3 {
       case Right =>
         (path.start.x + 1 to path.end.x).map(d => Coordinate(d, path.start.y))
       case Left =>
-        (path.end.x until path.start.x).map(d => Coordinate(d, path.start.y))
+        (path.end.x until path.start.x)
+          .map(d => Coordinate(d, path.start.y))
+          .reverse
       case Up =>
         (path.start.y + 1 to path.end.y).map(d => Coordinate(path.start.x, d))
       case Down =>
-        (path.end.y until path.start.y).map(d => Coordinate(path.start.x, d))
+        (path.end.y until path.start.y)
+          .map(d => Coordinate(path.start.x, d))
+          .reverse
     }
     out.toList
   }
@@ -240,63 +238,14 @@ object Day3 {
       *         or [[None]] if they don't intersect at all
       */
     def numberOfStepsToIntersection(wire0: Wire, wire1: Wire): Option[Int] = {
+      val wire0Coordinates = allCoordinates(wire0)
+      val wire1Coordinates = allCoordinates(wire1)
 
-      val out = intersectionPoints(wire0, wire1) match {
-        case Some(x) => {
-          val result = x.map(intersectionPoint => {
-            countNumberOfStepsToAnIntersection(wire0, intersectionPoint) + countNumberOfStepsToAnIntersection(
-              wire1,
-              intersectionPoint
-            )
-          })
-          Some(result.min)
-        }
-        case None => None
+      intersectionPoints(wire0, wire1).map { points =>
+        points.map { point =>
+          wire0Coordinates.indexOf(point) + 1 + wire1Coordinates.indexOf(point) + 1
+        }.min
       }
-      out
-    }
-
-    /**
-      *
-      * @param wire
-      * @param intersectionPoint
-      * @return
-      */
-    def countNumberOfStepsToAnIntersection(
-        wire: Wire,
-        intersectionPoint: Coordinate
-    ): Int = {
-      val turningPoints: List[Coordinate] = findTurningPoints(wire)
-
-      val startingAndEndingPoints
-          : List[(Displacement, StartingAndEndingPoints)] = wire.path
-        .zip(turningPoints.init)
-        .zip(turningPoints.tail)
-        .map(d => (d._1._1, StartingAndEndingPoints(d._1._2, d._2)))
-
-      val allCoordinates: List[(Displacement, List[Coordinate])] =
-        startingAndEndingPoints.map(i => (i._1, pathTravelled(i._1, i._2)))
-
-      val selectedDisplacement = allCoordinates
-        .filter(m => m._2.contains(intersectionPoint))
-        .head
-        ._1
-
-      val index =
-        startingAndEndingPoints.indexWhere(z => z._1 == selectedDisplacement)
-      val allPreviousSteps: Int =
-        startingAndEndingPoints
-          .take(index)
-          .map(m => m._1.distance)
-          .sum
-      val diffX = math.abs(
-        startingAndEndingPoints(index)._2.start.x - intersectionPoint.x
-      )
-      val diffY = math.abs(
-        startingAndEndingPoints(index)._2.start.y - intersectionPoint.y
-      )
-      val remainingSteps = diffX + diffY
-      allPreviousSteps + remainingSteps
     }
 
     /**
