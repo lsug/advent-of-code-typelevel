@@ -1,5 +1,8 @@
 package advent
 
+import advent.solutions.Day3.Direction._
+import advent.solutions.Day3._
+import advent.solutions.Day3.Part2._
 import org.scalatest._
 import advent.solutions._
 
@@ -38,4 +41,28 @@ final class Day3Spec
     either shouldBe 'right
     either.right.value
   }
+
+  private val _wire0 = Wire(
+    List(
+      Displacement(Right, 8),
+      Displacement(Up, 5),
+      Displacement(Left, 5),
+      Displacement(Down, 3)
+    )
+  )
+  private val _wire1 = Wire(
+    List(
+      Displacement(Up, 7),
+      Displacement(Right, 6),
+      Displacement(Down, 4),
+      Displacement(Left, 4)
+    )
+  )
+
+  "intersectionPoints" should "return 2 intersection points" in {
+    assertResult(Some(List(Coordinate(6, 5), Coordinate(3, 3)))) {
+      intersectionPoints(_wire0, _wire1)
+    }
+  }
+
 }
