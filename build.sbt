@@ -21,5 +21,6 @@ lazy val root = (project in file("."))
     ),
     scalastyleFailOnWarning := true,
     scalastyleFailOnError := true,
-    wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Equals, Wart.TraversableOps)
+    wartremoverErrors in (Compile, compile) ++= Warts
+      .allBut(Wart.Equals, Wart.TraversableOps)
   )
