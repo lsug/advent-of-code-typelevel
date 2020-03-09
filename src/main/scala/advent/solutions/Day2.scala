@@ -1,7 +1,5 @@
 package advent.solutions
 
-import scala.annotation.tailrec
-
 /** Day 2: 1202 Program Alarm
   *
   * @see https://adventofcode.com/2019/day/2
@@ -16,14 +14,10 @@ object Day2 {
       * @return The program after having been run on itself
       */
     def run(program: List[Int]): List[Int] = {
-      val len = program.length - 1
-
-      @tailrec
-      def go(accum: List[Int], num: Int): List[Int] = {
-        if (num > len) accum else go(repair(num, accum), num + 4)
-      }
-
-      go(program, 0)
+      val indexList = List.range(0, program.length, 4)
+      indexList.foldLeft(program)((acc, indexOfOpcode) =>
+        repair(acc, indexOfOpcode)
+      )
     }
 
     final case class Entry(index: Int, value: Int)
@@ -33,20 +27,23 @@ object Day2 {
     private val lookupAndAdd = lookupAndOperate(_ + _)(_, _)
     private val lookupAndMultiply = lookupAndOperate(_ * _)(_, _)
 
-    private def repair(initial: Int, program: List[Int]): List[Int] = {
-      if (program(initial) == additionCode)
-        repairProgram(program, lookupAndAdd(initial, program))
-      else if (program(initial) == multiplicationCode)
-        repairProgram(program, lookupAndMultiply(initial, program))
+    private def repair(program: List[Int], indexOfOpcode: Int): List[Int] = {
+      if (program(indexOfOpcode) == additionCode)
+        repairProgram(program, lookupAndAdd(indexOfOpcode, program))
+      else if (program(indexOfOpcode) == multiplicationCode)
+        repairProgram(program, lookupAndMultiply(indexOfOpcode, program))
       else program
     }
 
     private def lookupAndOperate(
         f: (Int, Int) => Int
-    )(initial: Int, program: List[Int]): Entry = {
+    )(indexOfOpcode: Int, program: List[Int]): Entry = {
       Entry(
-        program(initial + 3),
-        f(program(program(initial + 1)), program(program(initial + 2)))
+        program(indexOfOpcode + 3),
+        f(
+          program(program(indexOfOpcode + 1)),
+          program(program(indexOfOpcode + 2))
+        )
       )
     }
 
@@ -80,17 +77,15 @@ object Day2 {
 
       def check(input: Input): Boolean = {
         val modifiedProgram = generateUpdatedProgram(input, program)
-        val result = run(modifiedProgram)(0)
+        val result = run(modifiedProgram).head
         result == output
       }
 
-      val out = inputs.find(check(_) == true)
-      out
+      inputs.find(check(_) == true)
     }
 
     def generateUpdatedProgram(input: Input, program: List[Int]): List[Int] = {
-      val z1 = program.updated(1, input.noun)
-      z1.updated(2, input.verb)
+      program.updated(1, input.noun).updated(2, input.verb)
     }
   }
 
@@ -107,7 +102,7 @@ object Day2 {
       131, 2, 135, 1, 135, 6, 0, 99, 2, 0, 14, 0)
 
     // Solve your puzzle using the functions in parts 1 and 2
-    val part1 = Day2.Part1.run(puzzleInput)(0)
+    val part1 = Day2.Part1.run(puzzleInput).head
     println(part1)
     val part2 = Day2.Part2.inputForOutput(puzzleInput, 19690720)
     println(100 * part2.get.noun + part2.get.verb)
