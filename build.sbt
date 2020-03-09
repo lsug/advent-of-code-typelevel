@@ -8,6 +8,9 @@ ThisBuild / organizationName := "example"
 lazy val root = (project in file("."))
   .settings(
     name := "Advent Of Code",
+    scalacOptions ++= Seq(
+      "deprecation"
+    ),
     libraryDependencies ++= Seq(
       cats,
       catsEffect,
@@ -15,5 +18,8 @@ lazy val root = (project in file("."))
       monocleCore,
       monocleMacro,
       scalaTest % Test
-    )
+    ),
+    scalastyleFailOnWarning := true,
+    scalastyleFailOnError := true,
+    wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Equals, Wart.TraversableOps)
   )

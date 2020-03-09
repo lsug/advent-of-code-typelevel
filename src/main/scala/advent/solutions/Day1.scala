@@ -57,6 +57,8 @@ object Day1 {
     }
   }
 
+  // scalastyle:off
+  @SuppressWarnings(Array("org.wartremover.warts.All"))
   def main(args: Array[String]): Unit = {
 
     // Copy the puzzle input from https://adventofcode.com/2019/day/1/input
@@ -75,4 +77,5 @@ object Day1 {
     val part2 = Part2.sumOfTotalFuel(puzzleInput)
     println(part2)
   }
+  // scalastyle:on
 }

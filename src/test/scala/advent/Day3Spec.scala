@@ -38,8 +38,8 @@ final class Day3Spec
 
   private def parse(text: String): Day3.Wire = {
     val either = Day3.parse(text)
-    either shouldBe 'right
-    either.right.value
+    either.isRight shouldBe (true)
+    either.toOption.get
   }
 
   private val _wire0 = Wire(
