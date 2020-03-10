@@ -14,4 +14,4 @@ jobs:
       with:
         java-version: 1.8
     - name: Run tests
-      run: sbt scalafmtCheckAll scalafmtSbtCheck test
+      run: sbt scalafmtCheckAll scalafmtSbtCheck scalafix scalastyle compile test:compile test

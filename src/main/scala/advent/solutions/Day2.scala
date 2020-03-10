@@ -14,7 +14,9 @@ object Day2 {
       * @return The program after having been run on itself
       */
     def run(program: List[Int]): List[Int] = {
-      val indexList = List.range(0, program.length, 4)
+      val start: Int = 0
+      val step: Int = 4
+      val indexList = List.range(start, program.length, step)
       indexList.foldLeft(program)((acc, indexOfOpcode) =>
         repair(acc, indexOfOpcode)
       )
@@ -69,9 +71,11 @@ object Day2 {
       * @return The input that would be entered in the program to produce the given output
       */
     def inputForOutput(program: List[Int], output: Int): Option[Input] = {
-
-      val nouns = LazyList.range(0, 100, 1)
-      val verbs = LazyList.range(0, 100, 1)
+      val start: Int = 0
+      val step: Int = 1
+      val end: Int = 100
+      val nouns = LazyList.range(start, end, step)
+      val verbs = LazyList.range(start, end, step)
       val inputs: LazyList[Input] =
         nouns.flatMap(n => verbs.map(v => Input(n, v)))
 
@@ -81,7 +85,7 @@ object Day2 {
         result == output
       }
 
-      inputs.find(check(_) == true)
+      inputs.find(check(_))
     }
 
     def generateUpdatedProgram(input: Input, program: List[Int]): List[Int] = {
@@ -89,6 +93,8 @@ object Day2 {
     }
   }
 
+  // scalastyle:off
+  @SuppressWarnings(Array("org.wartremover.warts.All"))
   def main(args: Array[String]): Unit = {
 
     // Copy the puzzle input from https://adventofcode.com/2019/day/2/input
@@ -107,4 +113,5 @@ object Day2 {
     val part2 = Day2.Part2.inputForOutput(puzzleInput, 19690720)
     println(100 * part2.get.noun + part2.get.verb)
   }
+  // scalastyle:on
 }
