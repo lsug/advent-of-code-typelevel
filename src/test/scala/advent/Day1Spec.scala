@@ -3,7 +3,13 @@ package advent
 import org.scalatest._
 import advent.solutions._
 
-final class Day1Spec extends FlatSpec with Matchers {
+import cats.implicits._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+final class Day1Spec extends AnyFlatSpec with Matchers {
+
+  import Day1.implicits._
 
   "Part 1" should "have a mass of 2 for a module of mass 12" in {
     Day1.Part1.fuel(12) should be(2)
