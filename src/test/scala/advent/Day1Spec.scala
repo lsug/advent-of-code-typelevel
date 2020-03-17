@@ -3,6 +3,8 @@ package advent
 import org.scalatest._
 import advent.solutions._
 
+import Day1.implicits._
+
 final class Day1Spec extends FlatSpec with Matchers {
 
   "Part 1" should "have a mass of 2 for a module of mass 12" in {
