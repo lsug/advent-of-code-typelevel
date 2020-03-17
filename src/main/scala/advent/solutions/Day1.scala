@@ -42,22 +42,22 @@ object Day1 {
       * @param masses The masses of each module
       * @return The sum of the fuel required to launch each module
       */
-    def sumOfFuel[F[_], A](
-        masses: F[A]
-    )(implicit M: Mass[A], N: Monoid[A], G: Functor[F], H: Foldable[F]): A = {
+    def sumOfFuel[A](
+        masses: List[A]
+    )(implicit M: Mass[A], N: Monoid[A]): A = {
       sumFuels(calculateFuels(masses))
     }
 
-    private def calculateFuels[F[_], A](
-        masses: F[A]
-    )(implicit M: Mass[A], G: Functor[F]): F[A] = {
+    private def calculateFuels[A](
+        masses: List[A]
+    )(implicit M: Mass[A]): List[A] = {
       masses.map(fuel[A])
     }
 
-    private def sumFuels[F[_], A](
-        fuels: F[A]
-    )(implicit M: Monoid[A], F: Foldable[F]): A = {
-      fuels.fold
+    private def sumFuels[A](
+        fuels: List[A]
+    )(implicit M: Monoid[A]): A = {
+      fuels.fold(M.empty)(M.combine)
     }
   }
 
@@ -84,10 +84,10 @@ object Day1 {
       * @param masses The masses of each module
       * @return The sum of the total fuel required to launch each module
       */
-    def sumOfTotalFuel[F[_], A](
-        masses: F[A]
-    )(implicit M: Monoid[A], O: Order[A], G: Functor[F], H: Foldable[F]): A = {
-      masses.map(totalFuel[A]).fold
+    def sumOfTotalFuel[A](
+        masses: List[A]
+    )(implicit M: Monoid[A], O: Order[A]): A = {
+      masses.map(totalFuel[A]).fold(M.empty)(M.combine)
     }
   }
 
