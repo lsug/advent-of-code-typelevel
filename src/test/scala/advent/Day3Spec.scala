@@ -5,9 +5,11 @@ import advent.solutions.Day3._
 import advent.solutions.Day3.Part2._
 import org.scalatest._
 import advent.solutions._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 final class Day3Spec
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with EitherValues
     with OptionValues {
