@@ -1,9 +1,9 @@
-import Dependencies._
-
 ThisBuild / scalaVersion := "2.13.1"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.example"
 ThisBuild / organizationName := "example"
+
+lazy val libs = org.typelevel.libraries
 
 lazy val root = (project in file("."))
   .settings(
@@ -11,14 +11,8 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq(
       "deprecation"
     ),
-    libraryDependencies ++= Seq(
-      cats,
-      catsEffect,
-      fs2,
-      monocleCore,
-      monocleMacro,
-      scalaTest % Test
-    ),
+    libs.dependencies("cats-core"),
+    libs.testDependencies("scalatest"),
     scalastyleFailOnWarning := true,
     scalastyleFailOnError := true,
     wartremoverErrors in (Compile, compile) ++= Warts
