@@ -73,9 +73,9 @@ object Day1 {
       @tailrec
       def go(currentFuel: A, accum: A): A =
         if (currentFuel < M.empty) accum
-        else go(mass, accum combine currentFuel)
+        else go(Part1.fuel(currentFuel), accum combine currentFuel)
 
-      go(mass, M.empty)
+      go(Part1.fuel(mass), M.empty)
 
     }
 
