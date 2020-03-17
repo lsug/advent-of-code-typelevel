@@ -2,8 +2,10 @@ package advent
 
 import org.scalatest._
 import advent.solutions._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-final class Day2Spec extends FlatSpec with Matchers {
+final class Day2Spec extends AnyFlatSpec with Matchers {
 
   "Part 1" should "run 1,0,0,0,99 to produce 2,0,0,0,99 (1 + 1 = 2)" in {
     Day2.Part1.run(List(1, 0, 0, 0, 99)) should be(List(2, 0, 0, 0, 99))
