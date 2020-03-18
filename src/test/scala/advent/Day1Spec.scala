@@ -1,3 +1,4 @@
+package advent
 
 import org.scalatest._
 import advent.solutions._
