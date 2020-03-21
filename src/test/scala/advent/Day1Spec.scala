@@ -7,6 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import Day1.implicits._
+import cats.implicits._
 
 final class Day1Spec extends AnyFlatSpec with Matchers {
 

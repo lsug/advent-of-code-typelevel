@@ -68,7 +68,9 @@ object Day1 {
       * @param mass The mass of the module
       * @return The fuel required to launch the module, plus the fuel required to launch that fuel
       */
-    def totalFuel[A](mass: A)(implicit M: Monoid[A], N: Mass[A], O: Order[A]): A = {
+    def totalFuel[A](
+        mass: A
+    )(implicit M: Monoid[A], N: Mass[A], O: Order[A]): A = {
 
       @tailrec
       def go(currentFuel: A, accum: A): A =
@@ -86,7 +88,13 @@ object Day1 {
       */
     def sumOfTotalFuel[F[_], A](
         masses: F[A]
-    )(implicit M: Monoid[A], N: Mass[A], O: Order[A], G: Functor[F], H: Foldable[F]): A = {
+    )(
+        implicit M: Monoid[A],
+        N: Mass[A],
+        O: Order[A],
+        G: Functor[F],
+        H: Foldable[F]
+    ): A = {
       masses.map(totalFuel[A]).fold
     }
   }
