@@ -7,9 +7,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import Day1.implicits._
+import cats.implicits._
 
 final class Day1Spec extends AnyFlatSpec with Matchers {
-  
+
   "Part 1" should "have a mass of 2 for a module of mass 12" in {
     Day1.Part1.fuel(12) should be(2)
   }
