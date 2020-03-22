@@ -2,8 +2,6 @@ package advent.solutions
 
 import cats._
 import cats.implicits._
-import algebra.ring.{AdditiveSemigroup, MultiplicativeSemigroup}
-import algebra.instances.int._
 import scala.util.Try
 
 /** Day 2: 1202 Program Alarm
@@ -15,6 +13,8 @@ object Day2 {
   object Part1 {
 
     type Result[A] = Either[Error, A]
+
+    type Op = (Int, Int) => Int
 
     /** Runs an Intcode program
       *
@@ -99,12 +99,12 @@ object Day2 {
     private def lookupOp(
         program: List[Int],
         opcodeIndex: Int
-    ): Result[Semigroup[Int]] = {
+    ): Result[Op] = {
       val opcode = unsafeLookup(program, opcodeIndex)
       opcode match {
-        case `additionCode` => Right(AdditiveSemigroup[Int].additive)
+        case `additionCode` => Right(_ + _)
         case `multiplicationCode` =>
-          Right(MultiplicativeSemigroup[Int].multiplicative)
+          Right(_ * _)
         case `terminationCode` => Left(Error.Terminate(program))
         case unrecognizedCode =>
           Left(
@@ -124,7 +124,7 @@ object Day2 {
     private def operate(
         opcodeIndex: Int,
         program: List[Int],
-        op: Semigroup[Int]
+        op: Op
     ): Result[List[Int]] = {
       val xIndex = unsafeLookup(program, opcodeIndex + 1)
       val yIndex = unsafeLookup(program, opcodeIndex + 2)
@@ -132,7 +132,7 @@ object Day2 {
       for {
         x <- attemptLookup(program, xIndex)
         y <- attemptLookup(program, yIndex)
-        p <- attemptStore(program, storeIndex, op.combine(x, y))
+        p <- attemptStore(program, storeIndex, op(x, y))
       } yield p
     }
 
