@@ -1,7 +1,5 @@
 package advent.solutions
 
-import scala.util.Try
-
 /** Day 2: 1202 Program Alarm
   *
   * @see https://adventofcode.com/2019/day/2
@@ -21,44 +19,11 @@ object Day2 {
       */
     def run(
         program: List[Int]
-    ): Either[Error.InvalidProgramError, List[Int]] = {
+    ): List[Int] = {
       val start: Int = 0
       val step: Int = 4
       val indexList = List.range(start, program.length, step)
-      val p0: Result[List[Int]] = Right(program)
-      val result = indexList.foldLeft(p0)((pOrError, opcodeIndex) =>
-        pOrError.flatMap(runOp(_, opcodeIndex))
-      )
-      result.left.flatMap {
-        case Error.Terminate(p)           => Right(p)
-        case e: Error.InvalidProgramError => Left(e)
-      }
-    }
-
-    /**
-      * Any error that could occur when running a program.
-      *
-      * All errors will halt program execution
-      */
-    sealed trait Error
-
-    object Error {
-
-      /** The user supplied an invalid program */
-      sealed trait InvalidProgramError extends Error
-
-      object InvalidProgramError {
-
-        /** A program contained an unrecognized opcode */
-        final case class UnrecognizedCode(index: Int, code: Int)
-            extends InvalidProgramError
-
-        /** The program attempted to lookup or store a value at an index exceeding the program length */
-        final case class IndexNotFound(index: Int) extends InvalidProgramError
-      }
-
-      /** The program encountered a termination opcode and terminated */
-      final case class Terminate(program: List[Int]) extends Error
+      indexList.foldLeft(program)((p, opcodeIndex) => runOp(p, opcodeIndex))
     }
 
     private val additionCode: Int = 1
@@ -77,9 +42,10 @@ object Day2 {
     private def runOp(
         program: List[Int],
         opcodeIndex: Int
-    ): Result[List[Int]] = {
+    ): List[Int] = {
       lookupOp(program, opcodeIndex)
-        .flatMap(operate(opcodeIndex, program, _))
+        .map(operate(opcodeIndex, program, _))
+        .getOrElse(program)
     }
 
     /** Get the operation to run on the program
@@ -92,18 +58,12 @@ object Day2 {
     private def lookupOp(
         program: List[Int],
         opcodeIndex: Int
-    ): Result[Op] = {
-      val opcode = unsafeLookup(program, opcodeIndex)
+    ): Option[Op] = {
+      val opcode = lookup(program, opcodeIndex)
       opcode match {
-        case `additionCode` => Right(_ + _)
-        case `multiplicationCode` =>
-          Right(_ * _)
-        case `terminationCode` => Left(Error.Terminate(program))
-        case unrecognizedCode =>
-          Left(
-            Error.InvalidProgramError
-              .UnrecognizedCode(opcodeIndex, unrecognizedCode)
-          )
+        case `additionCode`       => Some(_ + _)
+        case `multiplicationCode` => Some(_ * _)
+        case `terminationCode`    => None
       }
     }
 
@@ -118,36 +78,27 @@ object Day2 {
         opcodeIndex: Int,
         program: List[Int],
         op: Op
-    ): Result[List[Int]] = {
-      val xIndex = unsafeLookup(program, opcodeIndex + 1)
-      val yIndex = unsafeLookup(program, opcodeIndex + 2)
-      val storeIndex = unsafeLookup(program, opcodeIndex + 3)
-      for {
-        x <- attemptLookup(program, xIndex)
-        y <- attemptLookup(program, yIndex)
-        p <- attemptStore(program, storeIndex, op(x, y))
-      } yield p
+    ): List[Int] = {
+      val xIndex = lookup(program, opcodeIndex + 1)
+      val yIndex = lookup(program, opcodeIndex + 2)
+      val storeIndex = lookup(program, opcodeIndex + 3)
+      val x = lookup(program, xIndex)
+      val y = lookup(program, yIndex)
+      store(program, storeIndex, op(x, y))
     }
 
-    /** Gets the value at an index.  This should only be used when the index is proven to exist within the program */
-    private def unsafeLookup(program: List[Int], i: Int): Int = {
+    /** Gets the value at an index */
+    private def lookup(program: List[Int], i: Int): Int = {
       program(i)
     }
 
-    /** Gets the value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
-    private def attemptLookup(program: List[Int], i: Int): Result[Int] = {
-      program.lift(i).toRight(Error.InvalidProgramError.IndexNotFound(i))
-    }
-
-    /** Stores a value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
-    private def attemptStore(
+    /** Stores a value at an index */
+    private def store(
         program: List[Int],
         i: Int,
         v: Int
-    ): Result[List[Int]] = {
-      Try(program.updated(i, v)).toEither.left.map(_ =>
-        Error.InvalidProgramError.IndexNotFound(i)
-      )
+    ): List[Int] = {
+      program.updated(i, v)
     }
   }
 
