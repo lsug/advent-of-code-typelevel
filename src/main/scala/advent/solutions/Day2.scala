@@ -160,8 +160,6 @@ object Day2 {
 
   object Part2 {
 
-    import cats.implicits._
-
     /** Represents the two numbers provided at addresses 1 and 2 of an Intcode program */
     final case class Input(noun: Int, verb: Int)
 
@@ -172,25 +170,16 @@ object Day2 {
       * @return The input that would be entered in the program to produce the given output
       */
     def inputForOutput(program: List[Int], output: Int): Option[Input] = {
-      val start: Int = 0
-      val end: Int = 100
-      val inputs = for {
-        noun <- List.range(start, end)
-        verb <- List.range(start, end)
-      } yield Input(noun, verb)
-
-      def check(input: Input): Boolean = {
-        Part1.run(setInput(input, program)).exists(_.head === output)
-      }
-
-      inputs.find(check(_))
+      ???
     }
 
-    private def setInput[P](input: Input, program: P)(
-        implicit I: Index[P, Int, Int]
-    ): P = {
-      I.index(1).set(input.noun).andThen(I.index(2).set(input.verb))(program)
-    }
+    // Uncomment this to solve part 2
+    // /** Stores the noun and verb at addresses 1 and 2 of the program */
+    // private def setInput[P](input: Input, program: P)(
+    //     implicit I: Index[P, Int, Int]
+    // ): P = {
+    //   ???
+    // }
   }
 
   // scalastyle:off
