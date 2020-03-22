@@ -57,11 +57,16 @@ object Day2 {
 
         /** The program attempted to lookup or store a value at an index exceeding the program length */
         final case class IndexNotFound(index: Int) extends InvalidProgramError
-        implicit val invalidProgramErrorShow: Show[InvalidProgramError] = {
-          import cats.derived._
-          import auto.show._
-          semi.show
-        }
+
+        implicit val invalidProgramErrorShow: Show[InvalidProgramError] =
+          new Show[InvalidProgramError] {
+
+            def show(error: InvalidProgramError): String = error match {
+              case UnrecognizedCode(index, code) =>
+                s"UnrecognizedCode(index = $index, code = $code)"
+              case IndexNotFound(index) => s"IndexNotFound(index = $index)"
+            }
+          }
       }
 
       /** The program encountered a termination opcode and terminated */
