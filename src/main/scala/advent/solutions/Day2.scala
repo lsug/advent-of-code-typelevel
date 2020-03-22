@@ -5,7 +5,6 @@ import cats.implicits._
 import algebra.ring.{AdditiveSemigroup, MultiplicativeSemigroup}
 import algebra.instances.int._
 import monocle.function.Index
-import fs2._
 
 /** Day 2: 1202 Program Alarm
   *
@@ -176,15 +175,15 @@ object Day2 {
       val start: Int = 0
       val end: Int = 100
       val inputs = for {
-        noun <- Stream.range(start, end)
-        verb <- Stream.range(start, end)
+        noun <- List.range(start, end)
+        verb <- List.range(start, end)
       } yield Input(noun, verb)
 
       def check(input: Input): Boolean = {
         Part1.run(setInput(input, program)).exists(_.head === output)
       }
 
-      inputs.find(check(_)).compile.toList.headOption
+      inputs.find(check(_))
     }
 
     private def setInput[P](input: Input, program: P)(
