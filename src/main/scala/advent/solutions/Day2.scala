@@ -4,7 +4,7 @@ import cats._
 import cats.implicits._
 import algebra.ring.{AdditiveSemigroup, MultiplicativeSemigroup}
 import algebra.instances.int._
-import monocle.function.Index
+import scala.util.Try
 
 /** Day 2: 1202 Program Alarm
   *
@@ -14,7 +14,7 @@ object Day2 {
 
   object Part1 {
 
-    type Result[P, A] = Either[Error[P], A]
+    type Result[A] = Either[Error, A]
 
     /** Runs an Intcode program
       *
@@ -27,7 +27,7 @@ object Day2 {
       val start: Int = 0
       val step: Int = 4
       val indexList = List.range(start, program.length, step)
-      val p0: Result[List[Int], List[Int]] = Right(program)
+      val p0: Result[List[Int]] = Right(program)
       val result = indexList.foldLeft(p0)((pOrError, opcodeIndex) =>
         pOrError.flatMap(runOp(_, opcodeIndex))
       )
@@ -42,12 +42,12 @@ object Day2 {
       *
       * All errors will halt program execution
       */
-    sealed trait Error[+P]
+    sealed trait Error
 
     object Error {
 
       /** The user supplied an invalid program */
-      sealed trait InvalidProgramError extends Error[Nothing]
+      sealed trait InvalidProgramError extends Error
 
       object InvalidProgramError {
 
@@ -65,7 +65,7 @@ object Day2 {
       }
 
       /** The program encountered a termination opcode and terminated */
-      final case class Terminate[P](program: P) extends Error[P]
+      final case class Terminate(program: List[Int]) extends Error
     }
 
     private val additionCode: Int = 1
@@ -81,9 +81,10 @@ object Day2 {
       *                     The index of the second value to operate on is located at `opcodeIndex + 2`.
       *                     The index to store the result at is located at `opcodeIndex + 3`.
       */
-    private def runOp[P](program: P, opcodeIndex: Int)(
-        implicit I: Index[P, Int, Int]
-    ): Result[P, P] = {
+    private def runOp(
+        program: List[Int],
+        opcodeIndex: Int
+    ): Result[List[Int]] = {
       lookupOp(program, opcodeIndex)
         .flatMap(operate(opcodeIndex, program, _))
     }
@@ -95,9 +96,10 @@ object Day2 {
       * @return             A multiplication or addition function corresponding to the opcode
                             Or an error in the case of termination or an unrecognized opcode
       */
-    private def lookupOp[P](program: P, opcodeIndex: Int)(
-        implicit I: Index[P, Int, Int]
-    ): Result[P, Semigroup[Int]] = {
+    private def lookupOp(
+        program: List[Int],
+        opcodeIndex: Int
+    ): Result[Semigroup[Int]] = {
       val opcode = unsafeLookup(program, opcodeIndex)
       opcode match {
         case `additionCode` => Right(AdditiveSemigroup[Int].additive)
@@ -119,9 +121,11 @@ object Day2 {
       * @param op           The function corresponding to the operation
       * @return             A modified program
       */
-    private def operate[P](opcodeIndex: Int, program: P, op: Semigroup[Int])(
-        implicit I: Index[P, Int, Int]
-    ): Result[P, P] = {
+    private def operate(
+        opcodeIndex: Int,
+        program: List[Int],
+        op: Semigroup[Int]
+    ): Result[List[Int]] = {
       val xIndex = unsafeLookup(program, opcodeIndex + 1)
       val yIndex = unsafeLookup(program, opcodeIndex + 2)
       val storeIndex = unsafeLookup(program, opcodeIndex + 3)
@@ -133,28 +137,24 @@ object Day2 {
     }
 
     /** Gets the value at an index.  This should only be used when the index is proven to exist within the program */
-    private def unsafeLookup[P](program: P, i: Int)(
-        implicit I: Index[P, Int, Int]
-    ): Int = {
-      I.index(i).getOption(program).get
+    private def unsafeLookup(program: List[Int], i: Int): Int = {
+      program(i)
     }
 
     /** Gets the value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
-    private def attemptLookup[P](program: P, i: Int)(
-        implicit I: Index[P, Int, Int]
-    ): Result[P, Int] = {
-      I.index(i)
-        .getOption(program)
-        .toRight(Error.InvalidProgramError.IndexNotFound(i))
+    private def attemptLookup(program: List[Int], i: Int): Result[Int] = {
+      program.get(i.toLong).toRight(Error.InvalidProgramError.IndexNotFound(i))
     }
 
     /** Stores a value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
-    private def attemptStore[P](program: P, i: Int, v: Int)(
-        implicit I: Index[P, Int, Int]
-    ): Result[P, P] = {
-      I.index(i)
-        .setOption(v)(program)
-        .toRight(Error.InvalidProgramError.IndexNotFound(i))
+    private def attemptStore(
+        program: List[Int],
+        i: Int,
+        v: Int
+    ): Result[List[Int]] = {
+      Try(program.updated(i, v)).toEither.leftMap(_ =>
+        Error.InvalidProgramError.IndexNotFound(i)
+      )
     }
   }
 
