@@ -11,10 +11,18 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq(
       "deprecation"
     ),
-    libs.dependencies("cats-core"),
+    libs
+      .add(name = "monocle", version = "1.6.0") //override versions
+      .dependencies(
+        "cats-core",
+        "algebra",
+        "fs2-core",
+        "monocle-core",
+        "kittens",
+        "newtype"
+      ),
     libs.testDependencies("scalatest"),
+    addCompilerPlugins(libs, "kind-projector"),
     scalastyleFailOnWarning := true,
-    scalastyleFailOnError := true,
-    wartremoverErrors in (Compile, compile) ++= Warts
-      .allBut(Wart.Equals, Wart.TraversableOps)
+    scalastyleFailOnError := true
   )
