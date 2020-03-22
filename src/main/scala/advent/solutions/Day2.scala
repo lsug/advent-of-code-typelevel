@@ -1,6 +1,5 @@
 package advent.solutions
 
-import cats.implicits._
 import scala.util.Try
 
 /** Day 2: 1202 Program Alarm
@@ -30,7 +29,7 @@ object Day2 {
       val result = indexList.foldLeft(p0)((pOrError, opcodeIndex) =>
         pOrError.flatMap(runOp(_, opcodeIndex))
       )
-      result.leftFlatMap {
+      result.left.flatMap {
         case Error.Terminate(p)           => Right(p)
         case e: Error.InvalidProgramError => Left(e)
       }
@@ -137,7 +136,7 @@ object Day2 {
 
     /** Gets the value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
     private def attemptLookup(program: List[Int], i: Int): Result[Int] = {
-      program.get(i.toLong).toRight(Error.InvalidProgramError.IndexNotFound(i))
+      program.lift(i).toRight(Error.InvalidProgramError.IndexNotFound(i))
     }
 
     /** Stores a value at an index.  This returns an [[IndexNotFound]] error if the index does not exist. */
@@ -146,7 +145,7 @@ object Day2 {
         i: Int,
         v: Int
     ): Result[List[Int]] = {
-      Try(program.updated(i, v)).toEither.leftMap(_ =>
+      Try(program.updated(i, v)).toEither.left.map(_ =>
         Error.InvalidProgramError.IndexNotFound(i)
       )
     }
