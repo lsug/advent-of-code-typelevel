@@ -25,7 +25,7 @@ object Abstraction {
   // head(Nil)
   def head(is: List[Boolean]): Option[Boolean] = {
     is match {
-      case Nil => None
+      case Nil    => None
       case i :: _ => Some(i)
     }
   }
@@ -38,7 +38,7 @@ object Abstraction {
   // getOrElse(None, 2)
   def getOrElse(o: Option[Boolean], b: Boolean): Boolean = {
     o match {
-      case None => b
+      case None    => b
       case Some(v) => v
     }
   }
